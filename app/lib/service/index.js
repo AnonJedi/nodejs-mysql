@@ -61,3 +61,15 @@ module.exports.createUser = (firstName, lastName, email, password) => {
             return new User(userData).save();
         });
 };
+
+
+module.exports.markAsDeleted = userId => (
+    new User({id: userId}).fetch()
+        .then((user) => {
+            if (!user) {
+                throw new ServiceError(`User with id '${userId}' is not found`);
+            }
+            return new User({id: userId})
+                .save({deleted_at: new Date()});
+        })
+);

@@ -23,3 +23,14 @@ module.exports.createUser = (req, res, next) => {
         res.json(presenters.fail(err, null));
     });
 };
+
+module.exports.deleteUser = (req, res, next) => {
+    service.markAsDeleted(req.params.userId)
+        .then((deletedUser) => {
+            res.json(presenters.success(deletedUser));
+            next();
+        }).catch((err) => {
+            console.log(err);
+            res.json(presenters.fail(err, null));
+        });
+};

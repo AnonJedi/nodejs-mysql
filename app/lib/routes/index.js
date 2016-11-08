@@ -13,12 +13,10 @@ module.exports = (server) => {
         });
 
     server.post('/users',
-        users.createUser,
-        (req, res) => {
-            res.json({
-                status: 200,
-                data: res.data,
-            });
-        }
+        users.createUser
+    );
+
+    server.del('/users/:userId',
+        users.deleteUser
     );
 };
