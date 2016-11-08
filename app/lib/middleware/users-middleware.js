@@ -8,12 +8,6 @@ const log = require('debug');
 const logStream = log('APP:HTTP:MIDDLEWARE:USERS');
 
 // Contents ===================
-module.exports.getUsers = (req, res, next) => {
-    User.fetchAll().then((users) => {
-        res.data = users;
-        return next();
-    });
-};
 
 module.exports.getUserById = (req, res, next) => {
     service.getUserById(req.params.userId)
@@ -24,6 +18,28 @@ module.exports.getUserById = (req, res, next) => {
             logStream(`An error occurred while getting user by id: ${err}`);
             res.json(presenters.fail(err));
         });
+};
+
+module.exports.getUsersPage = (req, res, next) => {
+    const rawData = {
+        page: req.query.page,
+        pageSize: req.query.pageSize,
+    };
+    const parsedData = parsers.parseGetUsersPage(rawData);
+    if (Object.keys(parsedData.err).length) {
+        logStream(`Wrong query parameters: ${JSON.stringify(parsedData.err)}`);
+        res.json(presenters.fail('Wrong query parameters', parsedData.err));
+        return;
+    }
+
+    service.getUsersPage(parsedData.page, parsedData.pageSize, req.query.orderBy)
+        .then((data) => {
+            res.json(presenters.success(data));
+            return next();
+        }).catch((err) => {
+            logStream(`An error occurred while getting users page: ${err}`);
+            res.json(presenters.fail(err, null));
+        })
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -51,7 +67,7 @@ module.exports.deleteUser = (req, res, next) => {
 module.exports.updateUser = (req, res, next) => {
     const parsedData = parsers.parseUpdateUser(req.body);
     if (Object.keys(parsedData.err).length) {
-        logStream(`Wrong user data: ${parsedData.err}`);
+        logStream(`Wrong user data: ${JSON.stringify(parsedData.err)}`);
         res.json(presenters.fail('Wrong user data', parsedData.err));
         return;
     }

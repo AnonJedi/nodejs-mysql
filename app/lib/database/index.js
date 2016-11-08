@@ -15,5 +15,6 @@ bookshelf.plugin(require('bookshelf-camelcase'));
 bookshelf.plugin(require('bookshelf-uuid'), {
     type: () => `US_${require('uuid').v1()}`,
 });
+bookshelf.plugin('pagination');
 
 module.exports = bookshelf;

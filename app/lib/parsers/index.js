@@ -1,6 +1,33 @@
 const constants = require('../constants');
 
 
+module.exports.parseGetUsersPage = (data) => {
+    const parsedData = {
+        err: {}
+    };
+
+    if (!data.page) {
+        parsedData.err.page = 'Page number is required';
+    } else {
+        parsedData.page = Number.parseInt(data.page);
+        if (!parsedData.page && parsedData.page !== 0) {
+            parsedData.err.page = 'Page mast be integer number';
+        }
+    }
+
+
+    if (!data.pageSize) {
+        parsedData.err.pageSize = 'Page size is required';
+    } else {
+        parsedData.pageSize = Number.parseInt(data.pageSize);
+        if (!parsedData.pageSize && parsedData.pageSize !== 0) {
+            parsedData.err.pageSize = 'Page size mast be integer number';
+        }
+    }
+
+    return parsedData;
+};
+
 module.exports.parseUpdateUser = (data) => {
     const parsedData = {
         err: {}

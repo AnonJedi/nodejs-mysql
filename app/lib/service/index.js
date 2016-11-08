@@ -62,7 +62,6 @@ module.exports.createUser = (firstName, lastName, email, password) => {
         });
 };
 
-
 module.exports.getUserById = userId => (
     new User({id: userId}).fetch()
         .then(user => {
@@ -75,6 +74,24 @@ module.exports.getUserById = userId => (
         })
 );
 
+module.exports.getUsersPage = (page, pageSize, orderBy) => (
+    new User()
+        .orderBy(constants.orderUserBy[orderBy] || constants.orderUserBy['lastName'])
+        .fetchPage({
+            pageSize,
+            page,
+    }).then(usersPage => (
+        new Promise((resolve) => {
+            resolve({
+                users: usersPage,
+                count: usersPage.pagination.rowCount,
+                page,
+                pageSize,
+                orderBy
+            });
+        })
+    ))
+);
 
 module.exports.markAsDeleted = userId => (
     new User({id: userId}).fetch()
@@ -86,7 +103,6 @@ module.exports.markAsDeleted = userId => (
                 .save({deleted_at: new Date()});
         })
 );
-
 
 module.exports.updateUser = (userId, userData) => (
     new User({id: userId}).save(userData)

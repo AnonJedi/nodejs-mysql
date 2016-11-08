@@ -2,15 +2,9 @@ const users = require('./../middleware/users-middleware');
 
 module.exports = (server) => {
 
-    server.get('/',
-        users.getUsers,
-        (req, res, next) => {
-            res.send({
-                status: 200,
-                data: res.data,
-            });
-            // return next();
-        });
+    server.get('/users',
+        users.getUsersPage
+    );
 
     server.get('/users/:userId',
         users.getUserById
