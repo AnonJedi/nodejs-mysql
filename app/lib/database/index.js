@@ -11,7 +11,7 @@ const knex = require('knex')({
 });
 
 const bookshelf = require('bookshelf')(knex);
-
+bookshelf.plugin(require('bookshelf-camelcase'));
 bookshelf.plugin(require('bookshelf-uuid'), {
     type: () => `US_${require('uuid').v1()}`,
 });

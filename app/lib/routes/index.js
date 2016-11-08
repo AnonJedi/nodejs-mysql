@@ -19,4 +19,8 @@ module.exports = (server) => {
     server.del('/users/:userId',
         users.deleteUser
     );
+
+    server.put('/users/:userId',
+        users.updateUser
+    );
 };

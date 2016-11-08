@@ -53,7 +53,7 @@ module.exports.createUser = (firstName, lastName, email, password) => {
                 throw new ServiceError('User with this email already exists');
             }
             userData.deleted_at = null;
-            userData.updated_at = userData.created_at = Date.now();
+            userData.created_at = new Date();
             return hashPassword(password);
         })
         .then((hashedPass) => {
@@ -72,4 +72,9 @@ module.exports.markAsDeleted = userId => (
             return new User({id: userId})
                 .save({deleted_at: new Date()});
         })
+);
+
+
+module.exports.updateUser = (userId, userData) => (
+    new User({id: userId}).save(userData)
 );
