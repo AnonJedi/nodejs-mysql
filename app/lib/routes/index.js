@@ -12,6 +12,10 @@ module.exports = (server) => {
             // return next();
         });
 
+    server.get('/users/:userId',
+        users.getUserById
+    );
+
     server.post('/users',
         users.createUser
     );

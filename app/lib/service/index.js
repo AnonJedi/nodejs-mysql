@@ -63,6 +63,19 @@ module.exports.createUser = (firstName, lastName, email, password) => {
 };
 
 
+module.exports.getUserById = userId => (
+    new User({id: userId}).fetch()
+        .then(user => {
+            if (!user) {
+                throw new ServiceError(`User with id '${userId}' is not found`);
+            }
+            return new Promise((resolve) => {
+                resolve(user);
+            });
+        })
+);
+
+
 module.exports.markAsDeleted = userId => (
     new User({id: userId}).fetch()
         .then((user) => {

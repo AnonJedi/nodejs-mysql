@@ -15,6 +15,17 @@ module.exports.getUsers = (req, res, next) => {
     });
 };
 
+module.exports.getUserById = (req, res, next) => {
+    service.getUserById(req.params.userId)
+        .then((user) => {
+            res.json(presenters.success(user));
+            return next();
+        }).catch((err) => {
+            logStream(`An error occurred while getting user by id: ${err}`);
+            res.json(presenters.fail(err));
+        });
+};
+
 module.exports.createUser = (req, res, next) => {
     service.createUser(req.body.firstName, req.body.lastName, req.body.email, req.body.password).then((user) => {
         console.log(user);
