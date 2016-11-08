@@ -12,6 +12,8 @@ const knex = require('knex')({
 
 const bookshelf = require('bookshelf')(knex);
 
-bookshelf.plugin(require('bookshelf-uuid'));
+bookshelf.plugin(require('bookshelf-uuid'), {
+    type: () => `US_${require('uuid').v1()}`,
+});
 
 module.exports = bookshelf;

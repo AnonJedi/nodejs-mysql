@@ -41,26 +41,16 @@ const comparePassword = (password, hashedPassword) => {
 };
 
 module.exports.createUser = (firstName, lastName, email, password) => {
-    new User({
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        password: password,
-        status: 'active',
-    }).save().then(user => console.log(user));
-
     const userData = {
         first_name: firstName,
         last_name: lastName,
         email: email,
         status: constants.userStatuses.active,
     };
-    new User({email: email}).fetch()
+    return new User({email: email}).fetch()
         .then((user) => {
             if (user && !user.deleted_at) {
                 throw new ServiceError('User with this email already exists');
-            } else if (!user) {
-                userData.id = `US-${uuid.v1()}`;
             }
             userData.deleted_at = null;
             userData.updated_at = userData.created_at = Date.now();
@@ -69,11 +59,5 @@ module.exports.createUser = (firstName, lastName, email, password) => {
         .then((hashedPass) => {
             userData.password = hashedPass;
             return new User(userData).save();
-        })
-        .then((user) => {
-            console.log('!!!!!!!!!!!!!!!user', user);
-            return new Promise((resolve) => {
-                resolve({});
-            });
         });
 };
