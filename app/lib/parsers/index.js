@@ -83,6 +83,18 @@ module.exports.parseCreateUser = (data) => {
     return parsedData;
 };
 
+module.exports.parseImportUsers = (data) => {
+    const parsedData = {
+        err: {},
+    };
+
+    if (!data.users || !(data.users instanceof Array)) {
+        parsedData.err.users = 'Wrong faormat of users list';
+    }
+    parsedData.users = data.users;
+    return parsedData;
+};
+
 module.exports.parseUpdateUser = (data) => {
     const parsedData = {
         err: {},

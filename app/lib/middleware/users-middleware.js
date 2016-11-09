@@ -77,6 +77,23 @@ module.exports.createUser = (req, res, next) => {
     });
 };
 
+module.exports.importUsers = (req, res, next) => {
+    const parsedData = parsers.parseImportUsers(req.body);
+    if (Object.keys(parsedData.err).length) {
+        logStream(`Wrong data format: ${JSON.stringify(parsedData.err)}`);
+        res.json(presenters.fail('Wrong data format', parsedData.err));
+        return;
+    }
+    service.importUsers(parsedData.users)
+        .then((data) => {
+            res.json(presenters.success(data));
+            return next();
+        }).catch((err) => {
+            logStream(`An error occurred while importing users: ${err}`);
+            res.json(presenters.fail(err, null));
+        });
+};
+
 module.exports.deleteUser = (req, res, next) => {
     service.markAsDeleted(req.params.userId)
         .then((deletedUser) => {

@@ -13,6 +13,10 @@ module.exports = (server) => {
         users.getUserByCredentials
     );
 
+    server.post('/users/import',
+        users.importUsers
+    );
+
     server.post('/users',
         users.createUser
     );

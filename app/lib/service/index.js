@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const ServiceError = require('../error');
 const constants = require('../constants');
+const parsers = require('../parsers');
 
 
 const hashPassword = (password) => {
@@ -39,7 +40,7 @@ const comparePassword = (password, hashedPassword) => {
     });
 };
 
-module.exports.createUser = (userData) => {
+const createUser = (userData) => {
     const buildUser = Object.assign(userData, {
         status: constants.userStatuses.active,
     });
@@ -58,6 +59,8 @@ module.exports.createUser = (userData) => {
             return new User(buildUser).save();
         });
 };
+
+module.exports.createUser = createUser;
 
 module.exports.getUserById = userId => (
     new User({id: userId}).fetch()
@@ -108,6 +111,44 @@ module.exports.getUserByCredentials = (email, password) => {
             reject(new ServiceError('Wrong pair email/password'));
         })
     ));
+};
+
+module.exports.importUsers = (users) => {
+    const results = {
+        done: [],
+        fail: [],
+    };
+    return new Promise((resolve) => {
+        users.forEach((user, i) => {
+            const parsedData = parsers.parseCreateUser(user);
+            if (Object.keys(parsedData.err).length) {
+                results.fail.push({
+                    data: user,
+                    error: parsedData.err,
+                });
+            } else {
+                createUser(user).then((createdUser) => {
+                    results.done.push(createdUser);
+                    if (users.length - 1 === i) {
+                        resolve(results);
+                    }
+                }).catch((err) => {
+                    let msg = 'An error occurred while creating user';
+                    if (err instanceof ServiceError) {
+                        msg = err.message;
+                    }
+                    results.fail.push({
+                        data: user,
+                        error: msg,
+                    });
+                    if (users.length - 1 === i) {
+                        resolve(results);
+                    }
+                });
+            }
+        });
+
+    });
 };
 
 module.exports.markAsDeleted = userId => (
