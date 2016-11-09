@@ -16,5 +16,7 @@ bookshelf.plugin(require('bookshelf-uuid'), {
     type: () => `US_${require('uuid').v1()}`,
 });
 bookshelf.plugin('pagination');
+bookshelf.plugin('registry');
+bookshelf.plugin(require('bookshelf-transaction-manager'));
 
 module.exports = bookshelf;

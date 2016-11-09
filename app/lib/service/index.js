@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const ServiceError = require('../error');
 const constants = require('../constants');
-const parsers = require('../parsers');
+const bookshelf = require('../database');
 
 
 const hashPassword = (password) => {
@@ -40,15 +40,18 @@ const comparePassword = (password, hashedPassword) => {
     });
 };
 
-const createUser = (userData) => {
+const createUser = (userData, transaction = undefined) => {
     const buildUser = Object.assign(userData, {
         status: constants.userStatuses.active,
     });
     delete buildUser.err;
     return new User({email: userData.email}).fetch()
         .then((user) => {
-            if (user && !user.deleted_at) {
-                throw new ServiceError('User with this email already exists');
+            if (user) {
+                if (!user.attributes.deletedAt) {
+                    throw new ServiceError('User with this email already exists');
+                }
+                buildUser.id = user.attributes.id;
             }
             buildUser.deletedAt = null;
             buildUser.createdAt = new Date();
@@ -56,7 +59,7 @@ const createUser = (userData) => {
         })
         .then((hashedPass) => {
             buildUser.password = hashedPass;
-            return new User(buildUser).save();
+            return new User(buildUser).save({transacting: transaction});
         });
 };
 
@@ -96,7 +99,7 @@ module.exports.getUsersPage = (page, pageSize, orderBy) => (
 module.exports.getUserByCredentials = (email, password) => {
     let user;
     return new User({
-        email: email,
+        email,
     }).fetch().then((dbUser) => {
         if (!dbUser) {
             throw new ServiceError('Wrong pair email/password');
@@ -114,41 +117,50 @@ module.exports.getUserByCredentials = (email, password) => {
 };
 
 module.exports.importUsers = (users) => {
-    const results = {
-        done: [],
-        fail: [],
-    };
-    return new Promise((resolve) => {
-        users.forEach((user, i) => {
-            const parsedData = parsers.parseCreateUser(user);
-            if (Object.keys(parsedData.err).length) {
-                results.fail.push({
-                    data: user,
-                    error: parsedData.err,
+    const emails = users.map(user => user.email);
+    const usersAlreadyExist = [];
+    return new User().where('email', 'in', emails).fetchAll()
+        .then((usersData) => {
+            const deletedUsers = [];
+            const existingUserEmails = usersData.map((user) => {
+                if (user.attributes.deletedAt) {
+                    deletedUsers.push(user);
+                }
+                usersAlreadyExist.push({
+                    error: 'User already exists',
+                    user,
                 });
-            } else {
-                createUser(user).then((createdUser) => {
-                    results.done.push(createdUser);
-                    if (users.length - 1 === i) {
-                        resolve(results);
-                    }
-                }).catch((err) => {
-                    let msg = 'An error occurred while creating user';
-                    if (err instanceof ServiceError) {
-                        msg = err.message;
-                    }
-                    results.fail.push({
-                        data: user,
-                        error: msg,
-                    });
-                    if (users.length - 1 === i) {
-                        resolve(results);
-                    }
+                return user.attributes.email;
+            });
+            const noUsers = users.filter(user => existingUserEmails.indexOf(user.email) === -1);
+            return bookshelf.transaction((t) => {
+                const promises = [];
+                noUsers.forEach((user) => {
+                    promises.push(new User(Object.assign(user, {
+                        status: constants.userStatuses.active,
+                    })).save(null, {transacting: t}));
                 });
-            }
+                deletedUsers.forEach((user) => {
+                    promises.push(new User(Object.assign(user.attributes, {
+                        status: constants.userStatuses.active,
+                        deletedAt: null,
+                        createdAt: new Date(),
+                    })).save(null, {transacting: t}));
+                });
+                return Promise.all(promises);
+            });
+        })
+        .then((createdUsers) => {
+            return new Promise((resolve) => {
+                resolve({
+                    fail: usersAlreadyExist,
+                    users: createdUsers.map(user => {
+                        delete user.attributes.updated_at;
+                        return user;
+                    }),
+                });
+            });
         });
-
-    });
 };
 
 module.exports.markAsDeleted = userId => (
@@ -158,7 +170,7 @@ module.exports.markAsDeleted = userId => (
                 throw new ServiceError(`User with id '${userId}' is not found`);
             }
             return new User({id: userId})
-                .save({deleted_at: new Date()});
+                .save({deletedAt: new Date()});
         })
 );
 

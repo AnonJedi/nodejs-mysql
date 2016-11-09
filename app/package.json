@@ -24,6 +24,7 @@
     "amqplib": "^0.4.2",
     "bookshelf": "^0.10.2",
     "bookshelf-camelcase": "^1.1.4",
+    "bookshelf-transaction-manager": "^0.2.4",
     "bookshelf-uuid": "^1.0.0",
     "bunyan": "^1.8.4",
     "crypto": "0.0.3",

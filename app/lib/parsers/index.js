@@ -51,7 +51,7 @@ module.exports.parseEmailAndPassword =  (data) => {
     return parsedData;
 };
 
-module.exports.parseCreateUser = (data) => {
+const parseCreateUser = (data) => {
     const parsedData = {
         err: {},
     };
@@ -83,15 +83,26 @@ module.exports.parseCreateUser = (data) => {
     return parsedData;
 };
 
+module.exports.parseCreateUser = parseCreateUser;
+
 module.exports.parseImportUsers = (data) => {
     const parsedData = {
         err: {},
+        fail: [],
+        users: [],
     };
 
-    if (!data.users || !(data.users instanceof Array)) {
-        parsedData.err.users = 'Wrong faormat of users list';
+    if (!data || !(data instanceof Array)) {
+        parsedData.err.users = 'Wrong format of users list';
     }
-    parsedData.users = data.users;
+    data.forEach((user) => {
+        const checkedUser = parseCreateUser(user);
+        if (Object.keys(checkedUser.err).length) {
+            parsedData.fail.push({user, error: checkedUser.err});
+        } else {
+            parsedData.users.push(user);
+        }
+    });
     return parsedData;
 };
 

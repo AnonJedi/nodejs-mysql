@@ -86,7 +86,11 @@ module.exports.importUsers = (req, res, next) => {
     }
     service.importUsers(parsedData.users)
         .then((data) => {
-            res.json(presenters.success(data));
+            const mixedData = {
+                fail: [...parsedData.fail, data.fail],
+                users: data.users,
+            };
+            res.json(presenters.success(mixedData));
             return next();
         }).catch((err) => {
             logStream(`An error occurred while importing users: ${err}`);
