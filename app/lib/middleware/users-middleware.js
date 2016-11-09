@@ -39,7 +39,26 @@ module.exports.getUsersPage = (req, res, next) => {
         }).catch((err) => {
             logStream(`An error occurred while getting users page: ${err}`);
             res.json(presenters.fail(err, null));
-        })
+        });
+};
+
+module.exports.getUserByCredentials = (req, res, next) => {
+    const parsedData = parsers.parseEmailAndPassword(req.body);
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!', parsedData);
+    if (Object.keys(parsedData.err).length) {
+        logStream(`Wrong user credentials: ${JSON.stringify(parsedData.err)}`);
+        res.json(presenters.fail('Wrong user credentials', parsedData.err));
+        return;
+    }
+
+    service.getUserByCredentials(parsedData.email, parsedData.password)
+        .then((data) => {
+            res.json(presenters.success(data));
+            return next();
+        }).catch((err) => {
+            logStream(`An error occurred while getting user by credentials: ${err}`);
+            res.json(presenters.fail(err, null));
+        });
 };
 
 module.exports.createUser = (req, res, next) => {

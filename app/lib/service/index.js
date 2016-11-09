@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const User = require('../models/user');
 const ServiceError = require('../error');
-const uuid = require('uuid');
 const constants = require('../constants');
 
 
@@ -64,7 +63,7 @@ module.exports.createUser = (firstName, lastName, email, password) => {
 
 module.exports.getUserById = userId => (
     new User({id: userId}).fetch()
-        .then(user => {
+        .then((user) => {
             if (!user) {
                 throw new ServiceError(`User with id '${userId}' is not found`);
             }
@@ -76,22 +75,42 @@ module.exports.getUserById = userId => (
 
 module.exports.getUsersPage = (page, pageSize, orderBy) => (
     new User()
-        .orderBy(constants.orderUserBy[orderBy] || constants.orderUserBy['lastName'])
+        .orderBy(constants.orderUserBy[orderBy] || constants.orderUserBy.lastName)
         .fetchPage({
             pageSize,
             page,
-    }).then(usersPage => (
-        new Promise((resolve) => {
-            resolve({
-                users: usersPage,
-                count: usersPage.pagination.rowCount,
-                page,
-                pageSize,
-                orderBy
-            });
-        })
+        }).then(usersPage => (
+            new Promise((resolve) => {
+                resolve({
+                    users: usersPage,
+                    count: usersPage.pagination.rowCount,
+                    page,
+                    pageSize,
+                    orderBy,
+                });
+            })
     ))
 );
+
+module.exports.getUserByCredentials = (email, password) => {
+    let user;
+    return new User({
+        email: email,
+    }).fetch().then((dbUser) => {
+        if (!dbUser) {
+            throw new ServiceError('Wrong pair email/password');
+        }
+        user = dbUser;
+        return comparePassword(password, user.attributes.password);
+    }).then(isMatch => (
+        new Promise((resolve, reject) => {
+            if (isMatch) {
+                resolve(user);
+            }
+            reject(new ServiceError('Wrong pair email/password'));
+        })
+    ));
+};
 
 module.exports.markAsDeleted = userId => (
     new User({id: userId}).fetch()

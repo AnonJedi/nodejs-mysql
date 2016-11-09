@@ -1,13 +1,16 @@
 const users = require('./../middleware/users-middleware');
 
 module.exports = (server) => {
-
     server.get('/users',
         users.getUsersPage
     );
 
     server.get('/users/:userId',
         users.getUserById
+    );
+
+    server.post('/users/getUserByCredentials',
+        users.getUserByCredentials
     );
 
     server.post('/users',
