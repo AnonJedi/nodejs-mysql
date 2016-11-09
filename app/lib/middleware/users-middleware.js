@@ -44,7 +44,6 @@ module.exports.getUsersPage = (req, res, next) => {
 
 module.exports.getUserByCredentials = (req, res, next) => {
     const parsedData = parsers.parseEmailAndPassword(req.body);
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!', parsedData);
     if (Object.keys(parsedData.err).length) {
         logStream(`Wrong user credentials: ${JSON.stringify(parsedData.err)}`);
         res.json(presenters.fail('Wrong user credentials', parsedData.err));
@@ -62,8 +61,14 @@ module.exports.getUserByCredentials = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-    service.createUser(req.body.firstName, req.body.lastName, req.body.email, req.body.password).then((user) => {
-        console.log(user);
+    const parsedData = parsers.parseCreateUser(req.body);
+    if (Object.keys(parsedData.err).length) {
+        logStream(`Wrong user data: ${JSON.stringify(parsedData.err)}`);
+        res.json(presenters.fail('Wrong user data', parsedData.err));
+        return;
+    }
+
+    service.createUser(parsedData).then((user) => {
         res.json(presenters.success(user));
         return next();
     }).catch((err) => {

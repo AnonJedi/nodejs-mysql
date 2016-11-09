@@ -39,25 +39,23 @@ const comparePassword = (password, hashedPassword) => {
     });
 };
 
-module.exports.createUser = (firstName, lastName, email, password) => {
-    const userData = {
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
+module.exports.createUser = (userData) => {
+    const buildUser = Object.assign(userData, {
         status: constants.userStatuses.active,
-    };
-    return new User({email: email}).fetch()
+    });
+    delete buildUser.err;
+    return new User({email: userData.email}).fetch()
         .then((user) => {
             if (user && !user.deleted_at) {
                 throw new ServiceError('User with this email already exists');
             }
-            userData.deleted_at = null;
-            userData.created_at = new Date();
-            return hashPassword(password);
+            buildUser.deletedAt = null;
+            buildUser.createdAt = new Date();
+            return hashPassword(userData.password);
         })
         .then((hashedPass) => {
-            userData.password = hashedPass;
-            return new User(userData).save();
+            buildUser.password = hashedPass;
+            return new User(buildUser).save();
         });
 };
 
